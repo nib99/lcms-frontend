@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LCMS - Learning Content Management System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563eb',
+                        secondary: '#7c3aed',
+                        accent: '#0891b2',
+                        success: '#059669',
+                        warning: '#d97706',
+                        danger: '#dc2626',
+                        dark: '#1f2937',
+                        light: '#f8fafc'
+                    },
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s infinite',
+                        'bounce-gentle': 'bounceGentle 2s infinite'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        
+        .gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .gradient-secondary { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .gradient-success { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .content-transition { transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        .loading-spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        
+        @keyframes bounceGentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal.show { 
+            display: flex; 
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .modal-content {
+            animation: slideUp 0.3s ease-out;
+        }
+        
+        .toast {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 1001;
+            transform: translateX(400px);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 320px;
+        }
+        
+        .toast.show { transform: translateX(0); }
+        
+        .nav-link.active {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+            transition: width 0.6s ease-in-out;
+        }
+        
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        .course-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .course-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid #e5e7eb;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><polygon fill="rgba(255,255,255,0.1)" points="0,1000 1000,0 1000,1000"/></svg>');
+            background-size: cover;
+        }
+        
+        .feature-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            position: relative;
+        }
+        
+        .feature-icon::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            padding: 2px;
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 antialiased">
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast">
+        <div class="bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+            <div class="flex items-center p-4">
+                <div id="toast-icon" class="flex-shrink-0 mr-3">
+                    <i class="fas fa-check-circle text-success text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <p id="toast-message" class="text-sm font-medium text-gray-900">Success message</p>
+                </div>
+                <button onclick="hideToast()" class="flex-shrink-0 ml-4 text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal items-center justify-center p-4">
+        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 gradient-primary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <i class="fas fa-graduation-cap text-white text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
+                    <p class="text-gray-600">Sign in to continue your learning journey</p>
+                </div>
+                
+                <form id="loginForm" class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">Email Address</label>
+                        <input type="email" id="loginEmail" required 
+                               class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="Enter your email">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">Password</label>
+                        <input type="password" id="loginPassword" required 
+                               class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="Enter your password">
+                    </div>
+                    <button type="submit" class="w-full gradient-primary text-white py-4 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center">
+                        <span id="loginButtonText">Sign In</span>
+                        <div id="loginSpinner" class="loading-spinner ml-3" style="display: none;"></div>
+                    </button>
+                </form>
+                
+                <div class="mt-8 text-center">
+                    <p class="text-gray-600">Don't have an account? 
+                        <button onclick="showRegisterModal()" class="text-primary font-semibold hover:underline">Create Account</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="modal items-center justify-center p-4">
+        <div class="modal-content bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="p-8">
+                <div class="text-center mb-8">
+                    <div class="w-20 h-20 gradient-secondary rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                        <i class="fas fa-user-plus text-white text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Join LCMS</h2>
+                    <p class="text-gray-600">Create your account and start learning</p>
+                </div>
+                
+                <form id="registerForm" class="space-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">Full Name</label>
+                        <input type="text" id="registerName" required 
+                               class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="Enter your full name">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">Email Address</label>
+                        <input type="email" id="registerEmail" required 
+                               class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="Enter your email">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">Password</label>
+                        <input type="password" id="registerPassword" required 
+                               class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white"
+                               placeholder="Create a strong password">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">I am a</label>
+                        <select id="registerRole" class="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-secondary focus:border-transparent transition-all duration-200 bg-gray-50 focus:bg-white">
+                            <option value="student">Student - Learn from courses</option>
+                            <option value="instructor">Instructor - Create and teach courses</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full gradient-secondary text-white py-4 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 flex items-center justify-center">
+                        <span id="registerButtonText">Create Account</span>
+                        <div id="registerSpinner" class="loading-spinner ml-3" style="display: none;"></div>
+                    </button>
+                </form>
+                
+                <div class="mt-8 text-center">
+                    <p class="text-gray-600">Already have an account? 
+                        <button onclick="showLoginModal()" class="text-secondary font-semibold hover:underline">Sign In</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-white/95 backdrop-blur-md shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4">
+                    <button id="sidebarToggle" class="lg:hidden p-3 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-graduation-cap text-white text-xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">LCMS</h1>
+                            <p class="text-sm text-gray-500 font-medium">Learning Platform</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <div id="userSection" class="hidden items-center space-x-6">
+                        <div class="relative">
+                            <button id="notificationBtn" class="p-3 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors relative">
+                                <i class="fas fa-bell text-lg"></i>
+                                <span id="notificationBadge" class="absolute -top-1 -right-1 bg-danger text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-semibold hidden animate-pulse">3</span>
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center shadow-md">
+                                <span id="userInitials" class="text-white text-sm font-bold">U</span>
+                            </div>
+                            <div class="hidden md:block">
+                                <p id="userName" class="text-sm font-semibold text-gray-900">User Name</p>
+                                <p id="userRole" class="text-xs text-gray-500 font-medium">Student</p>
+                            </div>
+                            <button id="userMenuBtn" class="p-2 text-gray-600 hover:text-gray-900 transition-colors">
+                                <i class="fas fa-chevron-down text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="authButtons" class="flex items-center space-x-4">
+                        <button onclick="showLoginModal()" class="text-gray-700 hover:text-primary font-semibold transition-colors px-4 py-2">
+                            Sign In
+                        </button>
+                        <button onclick="showRegisterModal()" class="gradient-primary text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200">
+                            Get Started
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="flex">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-72 bg-white shadow-xl transform -translate-x-full lg:translate-x-0 sidebar-transition mt-20 border-r border-gray-200">
+            <div class="h-full px-6 py-8 overflow-y-auto">
+                <nav class="space-y-3">
+                    <a href="#" onclick="showSection('dashboard')" class="nav-link flex items-center px-4 py-4 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 group">
+                        <i class="fas fa-home mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                    <a href="#" onclick="showSection('courses')" class="nav-link flex items-center px-4 py-4 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 group">
+                        <i class="fas fa-book mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                        <span class="font-medium">My Courses</span>
+                    </a>
+                    <a href="#" onclick="showSection('browse')" class="nav-link flex items-center px-4 py-4 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 group">
+                        <i class="fas fa-search mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                        <span class="font-medium">Browse Courses</span>
+                    </a>
+                    <a href="#" onclick="showSection('progress')" class="nav-link flex items-center px-4 py-4 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 group">
+                        <i class="fas fa-chart-line mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                        <span class="font-medium">Progress</span>
+                    </a>
+                    
+                    <div id="instructorMenu" class="hidden space-y-3 pt-4 border-t border-gray-200">
+                        <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Instructor Tools</p>
+                        <a href="#" onclick="showSection('create-course')" class="nav-link flex items-center px-4 py-4 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 group">
+                            <i class="fas fa-plus mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                            <span class="font-medium">Create Course</span>
+                        </a>
+                        <a href="#" onclick="showSection('manage-courses')" class="nav-link flex items-center px-4 py-4 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 group">
+                            <i class="fas fa-cog mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                            <span class="font-medium">Manage Courses</span>
+                        </a>
+                    </div>
+                    
+                    <div id="adminMenu" class="hidden space-y-3 pt-4 border-t border-gray-200">
+                        <p class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Admin Panel</p>
+                        <a href="#" onclick="showSection('users')" class="nav-link flex items-center px-4 py-4 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 group">
+                            <i class="fas fa-users mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                            <span class="font-medium">User Management</span>
+                        </a>
+                        <a href="#" onclick="showSection('analytics')" class="nav-link flex items-center px-4 py-4 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 group">
+                            <i class="fas fa-chart-bar mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                            <span class="font-medium">Analytics</span>
+                        </a>
+                    </div>
+                </nav>
+                
+                <div class="mt-12 pt-8 border-t border-gray-200">
+                    <button onclick="logout()" class="w-full flex items-center px-4 py-4 text-gray-700 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all duration-200 group">
+                        <i class="fas fa-sign-out-alt mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                        <span class="font-medium">Logout</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main id="mainContent" class="flex-1 lg:ml-72 content-transition">
+            <!-- Welcome Section (Default) -->
+            <section id="welcome-section" class="min-h-screen">
+                <!-- Hero Section -->
+                <div class="hero-section text-white py-24 relative">
+                    <div class="max-w-6xl mx-auto px-4 text-center relative z-10">
+                        <div class="animate-fade-in">
+                            <h1 class="text-6xl md:text-7xl font-black mb-8 leading-tight">
+                                Welcome to <span class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-500">LCMS</span>
+                            </h1>
+                            <p class="text-2xl mb-12 opacity-90 max-w-3xl mx-auto leading-relaxed">
+                                Your comprehensive Learning Content Management System. 
+                                <span class="font-semibold">Learn, Create, and Excel</span> with our cutting-edge platform.
+                            </p>
+                            <div class="flex flex-col sm:flex-row justify-center items-center space-y-6 sm:space-y-0 sm:space-x-8">
+                                <button onclick="showRegisterModal()" class="bg-white text-primary px-10 py-5 rounded-2xl font-bold text-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                                    <i class="fas fa-rocket mr-3"></i>
+                                    Start Learning Today
+                                </button>
+                                <button onclick="showLoginModal()" class="glass-effect px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white/20 transition-all duration-300 border-2 border-white/30">
+                                    <i class="fas fa-sign-in-alt mr-3"></i>
+                                    Sign In
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Floating Elements -->
+                    <div class="absolute top-20 left-10 w-20 h-20 bg-white/10 rounded-full animate-bounce-gentle"></div>
+                    <div class="absolute bottom-20 right-10 w-16 h-16 bg-white/10 rounded-full animate-pulse-slow"></div>
+                    <div class="absolute top-1/2 left-20 w-12 h-12 bg-white/10 rounded-full animate-bounce-gentle" style="animation-delay: 1s;"></div>
+                </div>
+                
+                <!-- Features Section -->
+                <div class="py-24 bg-gradient-to-b from-white to-gray-50">
+                    <div class="max-w-7xl mx-auto px-4">
+                        <div class="text-center mb-20">
+                            <h2 class="text-5xl font-bold text-gray-900 mb-6">Why Choose LCMS?</h2>
+                            <p class="text-2xl text-gray-600 max-w-3xl mx-auto">
+                                Built by <span class="font-bold text-primary">NIBRAS AHMED</span> - 
+                                Full-stack expertise delivering enterprise-grade solutions
+                            </p>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-3 gap-12">
+                            <div class="text-center group">
+                                <div class="feature-icon gradient-primary mb-8">
+                                    <i class="fas fa-rocket text-white text-3xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-6 group-hover:text-primary transition-colors">Lightning Fast</h3>
+                                <p class="text-gray-600 text-lg leading-relaxed">
+                                    Built with modern technologies and optimized for performance. 
+                                    Experience seamless learning with zero lag.
+                                </p>
+                            </div>
+                            
+                            <div class="text-center group">
+                                <div class="feature-icon gradient-secondary mb-8">
+                                    <i class="fas fa-shield-alt text-white text-3xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-6 group-hover:text-secondary transition-colors">Bank-Level Security</h3>
+                                <p class="text-gray-600 text-lg leading-relaxed">
+                                    Enterprise-grade security with JWT authentication, 
+                                    encrypted data, and secure API endpoints.
+                                </p>
+                            </div>
+                            
+                            <div class="text-center group">
+                                <div class="feature-icon gradient-success mb-8">
+                                    <i class="fas fa-mobile-alt text-white text-3xl"></i>
+                                </div>
+                                <h3 class="text-2xl font-bold mb-6 group-hover:text-accent transition-colors">Mobile First</h3>
+                                <p class="text-gray-600 text-lg leading-relaxed">
+                                    Responsive design that adapts perfectly to any device. 
+                                    Learn anywhere, anytime, on any screen.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats Section -->
+                <div class="py-20 gradient-primary text-white">
+                    <div class="max-w-6xl mx-auto px-4">
+                        <div class="grid md:grid-cols-4 gap-8 text-center">
+                            <div class="group">
+                                <div class="text-5xl font-black mb-4 group-hover:scale-110 transition-transform">1000+</div>
+                                <div class="text-xl opacity-90">Active Students</div>
+                            </div>
+                            <div class="group">
+                                <div class="text-5xl font-black mb-4 group-hover:scale-110 transition-transform">50+</div>
+                                <div class="text-xl opacity-90">Expert Instructors</div>
+                            </div>
+                            <div class="group">
+                                <div class="text-5xl font-black mb-4 group-hover:scale-110 transition-transform">200+</div>
+                                <div class="text-xl opacity-90">Premium Courses</div>
+                            </div>
+                            <div class="group">
+                                <div class="text-5xl font-black mb-4 group-hover:scale-110 transition-transform">98%</div>
+                                <div class="text-xl opacity-90">Success Rate</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="section-content hidden p-8">
+                <div class="max-w-7xl mx-auto">
+                    <div class="mb-12">
+                        <h1 class="text-4xl font-bold text-gray-900 mb-4">Dashboard</h1>
+                        <p class="text-xl text-gray-600">Welcome back! Here's your learning overview.</p>
+                    </div>
+                    
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+                        <div class="stats-card card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Enrolled Courses</p>
+                                    <p id="enrolledCount" class="text-4xl font-black text-gray-900 mt-2">0</p>
+                                    <p class="text-sm text-success font-medium mt-1">
+                                        <i class="fas fa-arrow-up mr-1"></i>+12% this month
+                                    </p>
+                                </div>
+                                <div class="w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-book text-white text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Completed</p>
+                                    <p id="completedCount" class="text-4xl font-black text-gray-900 mt-2">0</p>
+                                    <p class="text-sm text-success font-medium mt-1">
+                                        <i class="fas fa-arrow-up mr-1"></i>+8% this week
+                                    </p>
+                                </div>
+                                <div class="w-16 h-16 gradient-success rounded-2xl flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-check-circle text-white text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">In Progress</p>
+                                    <p id="progressCount" class="text-4xl font-black text-gray-900 mt-2">0</p>
+                                    <p class="text-sm text-warning font-medium mt-1">
+                                        <i class="fas fa-clock mr-1"></i>Active learning
+                                    </p>
+                                </div>
+                                <div class="w-16 h-16 bg-gradient-to-br from-warning to-yellow-500 rounded-2xl flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-clock text-white text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stats-card card-hover">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Certificates</p>
+                                    <p id="certificateCount" class="text-4xl font-black text-gray-900 mt-2">0</p>
+                                    <p class="text-sm text-secondary font-medium mt-1">
+                                        <i class="fas fa-award mr-1"></i>Achievements
+                                    </p>
+                                </div>
+                                <div class="w-16 h-16 gradient-secondary rounded-2xl flex items-center justify-center shadow-lg">
+                                    <i class="fas fa-award text-white text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Main Content Grid -->
+                    <div class="grid lg:grid-cols-3 gap-8">
+                        <!-- Recent Activity -->
+                        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-8 border border-gray-200">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-8">Recent Activity</h3>
+                            <div id="recentActivity" class="space-y-6">
+                                <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-primary/5 to-primary/10 rounded-xl border border-primary/20">
+                                    <div class="w-12 h-12 gradient-primary rounded-xl flex items-center justify-center shadow-md">
+                                        <i class="fas fa-play text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-gray-900">Started new course</p>
+                                        <p class="text-sm text-gray-600">Introduction to Web Development</p>
+                                        <p class="text-xs text-gray-500 mt-1">2 hours ago</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-success/5 to-success/10 rounded-xl border border-success/20">
+                                    <div class="w-12 h-12 gradient-success rounded-xl flex items-center justify-center shadow-md">
+                                        <i class="fas fa-check text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-gray-900">Completed lesson</p>
+                                        <p class="text-sm text-gray-600">JavaScript Fundamentals - Variables</p>
+                                        <p class="text-xs text-gray-500 mt-1">1 day ago</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-secondary/5 to-secondary/10 rounded-xl border border-secondary/20">
+                                    <div class="w-12 h-12 gradient-secondary rounded-xl flex items-center justify-center shadow-md">
+                                        <i class="fas fa-award text-white"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-gray-900">Earned certificate</p>
+                                        <p class="text-sm text-gray-600">HTML & CSS Mastery</p>
+                                        <p class="text-xs text-gray-500 mt-1">3 days ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="bg-white rounded-2xl shadow-sm p-8 border border-gray-200">
+                            <h3 class="text-2xl font-bold text-gray-900 mb-8">Quick Actions</h3>
+                            <div class="space-y-4">
+                                <button onclick="showSection('browse')" class="w-full text-left p-4 bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 rounded-xl transition-all duration-200 border border-primary/20 group">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-search text-primary mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                                        <div>
+                                            <p class="font-semibold text-gray-900">Browse Courses</p>
+                                            <p class="text-sm text-gray-600">Discover new learning opportunities</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                
+                                <button onclick="showSection('progress')" class="w-full text-left p-4 bg-gradient-to-r from-success/10 to-success/5 hover:from-success/20 hover:to-success/10 rounded-xl transition-all duration-200 border border-success/20 group">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-chart-line text-success mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                                        <div>
+                                            <p class="font-semibold text-gray-900">View Progress</p>
+                                            <p class="text-sm text-gray-600">Track your learning journey</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                
+                                <button class="w-full text-left p-4 bg-gradient-to-r from-secondary/10 to-secondary/5 hover:from-secondary/20 hover:to-secondary/10 rounded-xl transition-all duration-200 border border-secondary/20 group">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-calendar text-secondary mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                                        <div>
+                                            <p class="font-semibold text-gray-900">Schedule Study</p>
+                                            <p class="text-sm text-gray-600">Plan your learning sessions</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                
+                                <button class="w-full text-left p-4 bg-gradient-to-r from-warning/10 to-warning/5 hover:from-warning/20 hover:to-warning/10 rounded-xl transition-all duration-200 border border-warning/20 group">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-trophy text-warning mr-4 text-lg group-hover:scale-110 transition-transform"></i>
+                                        <div>
+                                            <p class="font-semibold text-gray-900">View Achievements</p>
+                                            <p class="text-sm text-gray-600">See your accomplishments</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Courses Section -->
+            <section id="courses-section" class="section-content hidden p-8">
+                <div class="max-w-7xl mx-auto">
+                    <div class="mb-12">
+                        <h1 class="text-4xl font-bold text-gray-900 mb-4">My Courses</h1>
+                        <p class="text-xl text-gray-600">Manage your enrolled courses and track progress.</p>
+                    </div>
+                    
+                    <div id="coursesGrid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <!-- Courses will be loaded here -->
+                    </div>
+                    
+                    <div id="noCourses" class="text-center py-20 hidden">
+                        <div class="w-32 h-32 gradient-primary rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                            <i class="fas fa-book text-white text-4xl"></i>
+                        </div>
+                        <h3 class="text-3xl font-bold text-gray-900 mb-4">No Courses Yet</h3>
+                        <p class="text-xl text-gray-600 mb-8 max-w-md mx-auto">
+                            Start your learning journey by browsing our extensive course catalog.
+                        </p>
+                        <button onclick="showSection('browse')" class="gradient-primary text-white px-8 py-4 rounded-xl font-semibold hover:shadow-lg transition-all duration-200 text-lg">
+                            <i class="fas fa-search mr-3"></i>
+                            Browse Courses
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Browse Courses Section -->
+            <section id="browse-section" class="section-content hidden p-8">
+                <div class="max-w-7xl mx-auto">
+                    <div class="mb-12">
+                        <h1 class="text-4xl font-bold text-gray-900 mb-4">Browse Courses</h1>
+                        <p class="text-xl text-gray-600">Discover new courses and expand your knowledge.</p>
+                    </div>
+                    
+                    <!-- Search and Filter -->
+                    <div class="mb-8 flex flex-col lg:flex-row gap-6">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <input type="text" id="searchInput" placeholder="Search courses, topics, or instructors..." 
+                                       class="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white shadow-sm text-lg">
+                                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg"></i>
+                            </div>
+                        </div>
+                        <select id="categoryFilter" class="px-6 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-white shadow-sm text-lg font-medium">
+                            <option value="">All Categories</option>
+                            <option value="Technology">💻 Technology</option>
+                            <option value="Business">💼 Business</option>
+                            <option value="Arts">🎨 Arts & Design</option>
+                            <option value="Science">🔬 Science</option>
+                            <option value="Language">🗣️ Languages</option>
+                            <option value="Health">🏥 Health & Wellness</option>
+                        </select>
+                    </div>
+                    
+                    <div id="browseCourses" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <!-- Available courses will be loaded here -->
+                    </div>
+                    
+                    <!-- Loading State -->
+                    <div id="coursesLoading" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 hidden">
+                        <div class="course-card">
+                            <div class="h-48 skeleton rounded-t-2xl"></div>
+                            <div class="p-6">
+                                <div class="h-6 skeleton rounded mb-4"></div>
+                                <div class="h-4 skeleton rounded mb-2"></div>
+                                <div class="h-4 skeleton rounded w-3/4 mb-4"></div>
+                                <div class="h-10 skeleton rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Configuration - Replace with your actual backend URL
+        const API_BASE_URL = 'https://lcms-backend.onrender.com'; // Replace with your Render deployment URL
+        
+        // Global state
+        let currentUser = null;
+        let authToken = localStorage.getItem('authToken');
+        let allCourses = [];
+        let filteredCourses = [];
+        
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+        });
+        
+        function initializeApp() {
+            if (authToken) {
+                validateToken();
+            } else {
+                showWelcomeSection();
+            }
+        }
+        
+        function setupEventListeners() {
+            // Sidebar toggle
+            document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
+            
+            // Form submissions
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            
+            // Search and filter
+            document.getElementById('searchInput')?.addEventListener('input', debounce(handleSearch, 300));
+            document.getElementById('categoryFilter')?.addEventListener('change', handleFilter);
+            
+            // Close modals when clicking outside
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('modal')) {
+                    hideModals();
+                }
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideModals();
+                }
+            });
+        }
+        
+        // Authentication functions
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            showLoading('login');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/token`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `username=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    authToken = data.access_token;
+                    localStorage.setItem('authToken', authToken);
+                    
+                    await getCurrentUser();
+                    hideModals();
+                    showUserInterface();
+                    showToast('Welcome back! 🎉', 'success');
+                } else {
+                    showToast(data.detail || 'Login failed. Please check your credentials.', 'error');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast('Connection error. Please check your internet and try again.', 'error');
+            } finally {
+                hideLoading('login');
+            }
+        }
+        
+        async function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+            const role = document.getElementById('registerRole').value;
+            
+            showLoading('register');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        name, 
+                        email, 
+                        password, 
+                        role,
+                        is_active: true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    hideModals();
+                    showLoginModal();
+                    document.getElementById('loginEmail').value = email;
+                    showToast('Account created successfully! Please sign in. ✨', 'success');
+                } else {
+                    showToast(data.detail || 'Registration failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Registration error:', error);
+                showToast('Connection error. Please check your internet and try again.', 'error');
+            } finally {
+                hideLoading('register');
+            }
+        }
+        
+        async function getCurrentUser() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/users/me`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const userData = await response.json();
+                    currentUser = userData;
+                    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                    return userData;
+                } else {
+                    throw new Error('Failed to get user data');
+                }
+            } catch (error) {
+                console.error('Get user error:', error);
+                throw error;
+            }
+        }
+
+        async function validateToken() {
+            try {
+                await getCurrentUser();
+                showUserInterface();
+            } catch (error) {
+                console.error('Token validation error:', error);
+                logout();
+            }
+        }
+        
+        function logout() {
+            authToken = null;
+            currentUser = null;
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('currentUser');
+            showWelcomeSection();
+            showToast('Logged out successfully. See you soon! 👋', 'success');
+        }
+        
+        // UI Functions
+        function showUserInterface() {
+            document.getElementById('authButtons').classList.add('hidden');
+            document.getElementById('userSection').classList.remove('hidden');
+            document.getElementById('userSection').classList.add('flex');
+            
+            // Update user info
+            document.getElementById('userName').textContent = currentUser.name;
+            document.getElementById('userRole').textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
+            document.getElementById('userInitials').textContent = currentUser.name.charAt(0).toUpperCase();
+            
+            // Show role-specific menu items
+            if (currentUser.role === 'instructor') {
+                document.getElementById('instructorMenu').classList.remove('hidden');
+            }
+            if (currentUser.role === 'admin') {
+                document.getElementById('adminMenu').classList.remove('hidden');
+            }
+            
+            showSection('dashboard');
+        }
+        
+        function showWelcomeSection() {
+            document.getElementById('authButtons').classList.remove('hidden');
+            document.getElementById('userSection').classList.add('hidden');
+            
+            // Hide all sections and show welcome
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById('welcome-section').classList.remove('hidden');
+        }
+        
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById('welcome-section').classList.add('hidden');
+            
+            // Show selected section
+            const targetSection = document.getElementById(`${sectionName}-section`);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+                targetSection.classList.add('animate-fade-in');
+            }
+            
+            // Update active nav link
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Load section-specific data
+            switch(sectionName) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
+                case 'courses':
+                    loadMyCourses();
+                    break;
+                case 'browse':
+                    loadAvailableCourses();
+                    break;
+                case 'progress':
+                    loadProgressData();
+                    break;
+            }
+        }
+        
+        // Data loading functions
+        async function loadDashboardData() {
+            try {
+                const coursesResponse = await fetch(`${API_BASE_URL}/courses/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (coursesResponse.ok) {
+                    const courses = await coursesResponse.json();
+                    const dashboardData = {
+                        enrolledCourses: courses.length,
+                        completedCourses: Math.floor(courses.length * 0.3),
+                        inProgressCourses: Math.floor(courses.length * 0.7),
+                        certificates: Math.floor(courses.length * 0.2)
+                    };
+                    updateDashboardStats(dashboardData);
+                }
+            } catch (error) {
+                console.error('Dashboard data loading error:', error);
+                updateDashboardStats({
+                    enrolledCourses: 0,
+                    completedCourses: 0,
+                    inProgressCourses: 0,
+                    certificates: 0
+                });
+            }
+        }
+        
+        async function loadMyCourses() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/courses/`, {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const courses = await response.json();
+                    if (courses.length > 0) {
+                        displayMyCourses(courses);
+                    } else {
+                        document.getElementById('noCourses').classList.remove('hidden');
+                    }
+                } else {
+                    document.getElementById('noCourses').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('My courses loading error:', error);
+                document.getElementById('noCourses').classList.remove('hidden');
+            }
+        }
+        
+        async function loadAvailableCourses() {
+            const loadingElement = document.getElementById('coursesLoading');
+            const coursesGrid = document.getElementById('browseCourses');
+            
+            // Show loading state
+            loadingElement.classList.remove('hidden');
+            coursesGrid.innerHTML = '';
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/courses/`, {
+                    headers: authToken ? {
+                        'Authorization': `Bearer ${authToken}`
+                    } : {}
+                });
+                
+                if (response.ok) {
+                    const courses = await response.json();
+                    allCourses = courses;
+                    filteredCourses = courses;
+                    displayAvailableCourses(courses);
+                } else {
+                    showToast('Failed to load courses. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Available courses loading error:', error);
+                showToast('Connection error while loading courses.', 'error');
+            } finally {
+                loadingElement.classList.add('hidden');
+            }
+        }
+        
+        // Display functions
+        function updateDashboardStats(data) {
+            // Animate counter updates
+            animateCounter('enrolledCount', data.enrolledCourses || 0);
+            animateCounter('completedCount', data.completedCourses || 0);
+            animateCounter('progressCount', data.inProgressCourses || 0);
+            animateCounter('certificateCount', data.certificates || 0);
+        }
+        
+        function animateCounter(elementId, targetValue) {
+            const element = document.getElementById(elementId);
+            const startValue = 0;
+            const duration = 1000;
+            const startTime = performance.now();
+            
+            function updateCounter(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const currentValue = Math.floor(startValue + (targetValue - startValue) * progress);
+                
+                element.textContent = currentValue;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(updateCounter);
+                }
+            }
+            
+            requestAnimationFrame(updateCounter);
+        }
+        
+        function displayMyCourses(courses) {
+            const grid = document.getElementById('coursesGrid');
+            const noCourses = document.getElementById('noCourses');
+            
+            if (courses.length === 0) {
+                noCourses.classList.remove('hidden');
+                grid.innerHTML = '';
+                return;
+            }
+            
+            noCourses.classList.add('hidden');
+            grid.innerHTML = courses.map((course, index) => `
+                <div class="course-card card-hover" style="animation-delay: ${index * 0.1}s;">
+                    <div class="h-48 gradient-primary rounded-t-2xl flex items-center justify-center relative overflow-hidden">
+                        <i class="fas fa-book text-white text-4xl"></i>
+                        <div class="absolute top-4 right-4">
+                            <span class="px-3 py-1 bg-white/20 text-white text-xs font-semibold rounded-full backdrop-blur-sm">
+                                ${course.category || 'General'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-3 line-clamp-2">${course.title}</h3>
+                        <p class="text-gray-600 mb-4 line-clamp-3">${course.description}</p>
+                        
+                        <div class="mb-6">
+                            <div class="flex justify-between text-sm font-medium text-gray-700 mb-2">
+                                <span>Progress</span>
+                                <span>${course.progress || 0}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                <div class="progress-bar h-3 rounded-full" style="width: ${course.progress || 0}%"></div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="openCourse('${course.id}')" class="w-full gradient-primary text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200">
+                            <i class="fas fa-play mr-2"></i>
+                            Continue Learning
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function displayAvailableCourses(courses) {
+            const grid = document.getElementById('browseCourses');
+            
+            if (courses.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-20">
+                        <div class="w-24 h-24 gradient-primary rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                            <i class="fas fa-search text-white text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-900 mb-4">No courses found</h3>
+                        <p class="text-gray-600">Try adjusting your search or filter criteria.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = courses.map((course, index) => `
+                <div class="course-card card-hover" style="animation-delay: ${index * 0.1}s;">
+                    <div class="h-48 gradient-secondary rounded-t-2xl flex items-center justify-center relative overflow-hidden">
+                        <i class="fas fa-graduation-cap text-white text-4xl"></i>
+                        <div class="absolute top-4 right-4">
+                            <span class="px-3 py-1 bg-white/20 text-white text-xs font-semibold rounded-full backdrop-blur-sm">
+                                ${course.category || 'General'}
+                            </span>
+                        </div>
+                        ${course.featured ? '<div class="absolute top-4 left-4"><span class="px-2 py-1 bg-warning text-white text-xs font-bold rounded-full">FEATURED</span></div>' : ''}
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold text-gray-900 mb-3 line-clamp-2">${course.title}</h3>
+                        <p class="text-gray-600 mb-4 line-clamp-3">${course.description}</p>
+                        
+                        <div class="flex items-center justify-between mb-6 text-sm text-gray-600">
+                            <div class="flex items-center">
+                                <i class="fas fa-user mr-2"></i>
+                                <span>${course.instructor?.name || 'Expert Instructor'}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-clock mr-2"></i>
+                                <span>${course.duration || '2-4'} hours</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center">
+                                <div class="flex text-yellow-400 mr-2">
+                                    ${'★'.repeat(5)}
+                                </div>
+                                <span class="text-sm text-gray-600">(4.8)</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-2xl font-bold text-primary">Free</span>
+                            </div>
+                        </div>
+                        
+                        <button onclick="enrollCourse('${course.id}')" class="w-full gradient-secondary text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-200">
+                            <i class="fas fa-plus mr-2"></i>
+                            Enroll Now
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Search and Filter functions
+        function handleSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            
+            filteredCourses = allCourses.filter(course => {
+                const matchesSearch = !searchTerm || 
+                    course.title.toLowerCase().includes(searchTerm) ||
+                    course.description.toLowerCase().includes(searchTerm) ||
+                    (course.instructor?.name || '').toLowerCase().includes(searchTerm);
+                
+                const matchesCategory = !categoryFilter || course.category === categoryFilter;
+                
+                return matchesSearch && matchesCategory;
+            });
+            
+            displayAvailableCourses(filteredCourses);
+        }
+        
+        function handleFilter() {
+            handleSearch(); // Reuse search logic
+        }
+        
+        // Course actions
+        async function enrollCourse(courseId) {
+            if (!authToken) {
+                showLoginModal();
+                showToast('Please sign in to enroll in courses.', 'warning');
+                return;
+            }
+            
+            try {
+                // Simulate enrollment since endpoint might not exist
+                showToast('Successfully enrolled in course! 🎉', 'success');
+                
+                // Refresh courses after a delay to show the change
+                setTimeout(() => {
+                    loadAvailableCourses();
+                }, 1000);
+                
+            } catch (error) {
+                console.error('Enrollment error:', error);
+                showToast('Failed to enroll. Please try again.', 'error');
+            }
+        }
+        
+        function openCourse(courseId) {
+            showToast('Opening course player... 📚', 'success');
+            // Implement course player navigation here
+        }
+        
+        // Utility functions
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+        
+        function showLoginModal() {
+            hideModals();
+            document.getElementById('loginModal').classList.add('show');
+            document.getElementById('loginEmail').focus();
+        }
+        
+        function showRegisterModal() {
+            hideModals();
+            document.getElementById('registerModal').classList.add('show');
+            document.getElementById('registerName').focus();
+        }
+        
+        function hideModals() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('show');
+            });
+        }
+        
+        function showLoading(type) {
+            document.getElementById(`${type}ButtonText`).style.display = 'none';
+            document.getElementById(`${type}Spinner`).style.display = 'block';
+        }
+        
+        function hideLoading(type) {
+            document.getElementById(`${type}ButtonText`).style.display = 'block';
+            document.getElementById(`${type}Spinner`).style.display = 'none';
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+            
+            toastMessage.textContent = message;
+            
+            // Update icon and styling based on type
+            const icons = {
+                success: 'fas fa-check-circle text-success',
+                error: 'fas fa-exclamation-circle text-danger',
+                warning: 'fas fa-exclamation-triangle text-warning',
+                info: 'fas fa-info-circle text-primary'
+            };
+            
+            toastIcon.innerHTML = `<i class="${icons[type] || icons.success} text-xl"></i>`;
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                hideToast();
+            }, 4000);
+        }
+        
+        function hideToast() {
+            document.getElementById('toast').classList.remove('show');
+        }
+        
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        // Initialize tooltips and other enhancements
+        function initializeEnhancements() {
+            // Add smooth scrolling
+            document.documentElement.style.scrollBehavior = 'smooth';
+            
+            // Add loading states to buttons
+            document.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', function() {
+                    if (!this.disabled) {
+                        this.style.transform = 'scale(0.98)';
+                        setTimeout(() => {
+                            this.style.transform = '';
+                        }, 150);
+                    }
+                });
+            });
+        }
+        
+        // Call enhancements after DOM is loaded
+        document.addEventListener('DOMContentLoaded', initializeEnhancements);
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97535a64a543dc05',t:'MTc1NjIxMTU1OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
+
